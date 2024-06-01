@@ -1,4 +1,4 @@
-
+import Auth from '../utils/auth'
 import {
   Container,
   Card,
@@ -8,33 +8,33 @@ import {
 } from 'react-bootstrap';
 import { GET_USER } from '../utils/queries';
 import { REMOVE_BOOK } from '../utils/mutations';
-import { removeBookId } from '../utils/localStorage';
+import { removeBookId  } from '../utils/localStorage';
 import { useQuery, useMutation } from '@apollo/client';
 
 
 const SavedBooks = () => {
   const { loading, data } = useQuery(GET_USER);
-  const [removeBook] = useMutation(REMOVE_BOOK);
+  const [deleteBook] = useMutation(REMOVE_BOOK);
   // use this to determine if `useEffect()` hook needs to run again
-  if (loading) {
-    return <h2>LOADING...</h2>;
-  }
-  const userData = data?.user || {};
+  console.log('this is saved book data', data)
+  const userData = data?.myProfile || {};
+
+  
 
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
-    try {
-      await removeBook({
+    try {console.log(bookId)
+      const newUser=await deleteBook({
         variables: { bookId },
-        update: (cache, { data: { removeBook } }) => {
+        update: (cache, { data: { deleteBook } }) => {
           const { user } = cache.readQuery({ query: GET_USER });
           cache.writeQuery({
             query: GET_USER,
-            data: { user: { ...user, savedBooks: removeBook.savedBooks } },
+            data: { user: { ...user, savedBooks: deleteBook.savedBooks } },
           });
         },
-      });
+      });console.log(newUser)
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
@@ -42,7 +42,9 @@ const SavedBooks = () => {
     }
   };
 
-
+  if (loading) {
+    return <h2>LOADING...</h2>;
+  }
   return (
     <>
       <div className="text-light bg-dark p-5">
@@ -52,12 +54,12 @@ const SavedBooks = () => {
       </div>
       <Container>
         <h2 className='pt-5'>
-          {userData.savedBooks.length
+          {userData.savedBooks?.length
             ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
-          {userData.savedBooks.map((book) => {
+          {userData.savedBooks?.map((book) => {
             return (
               <Col key={book.bookId} md="4">
                 <Card  border='dark'>

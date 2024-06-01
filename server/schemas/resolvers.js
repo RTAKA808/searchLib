@@ -1,14 +1,15 @@
 // import user model
-const { ConnectionStates } = require('mongoose');
 const { User } = require('../models');
 // import sign token function from auth
 const { signToken, AuthenticationError } = require('../utils/auth');
 
 const resolvers={
     Query:{
-        user: async (parent, _,context) => {
+        myProfile: async (parent, _,context) => {
           if(context.user){
-            return await User.findById(context.user._id);
+            const user= await User.findById({_id: context.user._id}).populate('savedBooks');
+            console.log('this is user',user)
+            return user
           }else{
             throw AuthenticationError;
           }
@@ -53,7 +54,7 @@ const resolvers={
         deleteBook: async (parent, { bookId }, context)=>{
           if (context.user){
             const updatedUser=await User.findOneAndUpdate(
-              { _id: bookId },
+              { _id: context.user._id },
               { $pull: { savedBooks: { bookId } } },
               { new: true }
             );
